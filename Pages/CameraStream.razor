@@ -1,0 +1,48 @@
+﻿@page "/camera-stream"
+@inject IJSRuntime JSRuntime
+
+<div class="select">
+    <label for="videoSource">Video source: </label>
+    <select id="videoSource"></select>
+</div>
+<button class="btn" @onclick="Rectify">Rectify</button>
+
+<div class="container">
+    <div id="videoview">
+        <div class="dce-video-container" id="videoContainer"></div>
+        <canvas id="overlay"></canvas>
+    </div>
+    <div>
+        <canvas id="canvas"></canvas>
+    </div>
+</div>
+
+@code {
+    private DotNetObjectReference<CameraStream>? objRef;
+
+    protected override void OnInitialized()
+    {
+        //objRef = DotNetObjectReference.Create(this);
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            objRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeAsync<Boolean>("jsFunctions.initScanner", objRef, "videoContainer", "videoSource", "overlay");
+        }
+    }
+
+    public async Task Rectify()
+    {
+        await JSRuntime.InvokeVoidAsync(
+        "jsFunctions.rectify", objRef, "canvas");
+    }
+
+    public void Dispose()
+    {
+        objRef?.Dispose();
+    }
+}

@@ -1,0 +1,49 @@
+﻿@page "/"
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Components.Web;
+
+@if (initialized == false)
+{
+    <p>Initializing Dynamsoft Document Normalizer SDK...</p>
+}
+else {
+    <PageTitle>Document Rectification</PageTitle>
+
+    <h1>Dynamsoft Document Normalizer Sample</h1>
+    
+    <div>
+
+        <button class="btn" @onclick="StartReader">Image File</button>
+        <button class="btn" @onclick="StartScanner">Camera Stream</button>
+    </div>
+    
+    <div>
+        <img src="image-document.png" alt="doc" />
+    </div>
+}
+
+@code {
+    Boolean initialized = false;
+
+    protected override void OnInitialized()
+    {
+        Init();
+    }
+
+    public async void Init()
+    {
+        initialized = await JSRuntime.InvokeAsync<Boolean>("jsFunctions.initSDK", "DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==");
+        StateHasChanged();
+    }
+
+    public void StartReader()
+    {
+        NavigationManager.NavigateTo("image-file");
+    }
+
+    public void StartScanner()
+    {
+        NavigationManager.NavigateTo("camera-stream");
+    }
+}
