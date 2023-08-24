@@ -8,7 +8,8 @@ let videoSelect = null;
 let cameraInfo = {};
 let videoContainer = null;
 let target = {};
-
+let output = null;
+let ctx = null;
 function initOverlay(ol) {
     overlay = ol;
     context = overlay.getContext('2d');
@@ -22,16 +23,18 @@ function save() {
     })();
 }
 
-function normalize(file, quad, canvas) {
+function normalize(file, quad) {
+    if (file == null || quad == null) {
+        return;
+    }
     (async () => {
         if (normalizer) {
             normalizedImageResult = await normalizer.normalize(file, quad);
             if (normalizedImageResult) {
                 let image = normalizedImageResult.image;
-                canvas.width = image.width;
-                canvas.height = image.height;
+                output.width = image.width;
+                output.height = image.height;
                 let data = new ImageData(new Uint8ClampedArray(image.data), image.width, image.height);
-                let ctx = canvas.getContext('2d');
                 ctx.putImageData(data, 0, 0);
             }
         }
@@ -94,24 +97,27 @@ function drawQuad(points) {
     }
 }
 
-function decodeImage(dotnetRef, url, data) {
+function decodeImage(sourceImage) {
     const img = new Image()
     img.onload = () => {
         updateOverlay(img.width, img.height);
         if (normalizer) {
             (async () => {
-                let quads = await normalizer.detectQuad(target["file"]);
+                let quads = await normalizer.detectQuad(sourceImage);
                 if (quads.length == 0) {
                     return;
                 }
+                target["file"] = sourceImage;
                 points = quads[0].location.points;
                 target["points"] = points;
                 drawQuad(points);
+
+                normalize(target["file"], points)
             })();
 
         }
     }
-    img.src = url
+    img.src = sourceImage
 }
 
 function updateResolution() {
@@ -144,7 +150,6 @@ async function init() {
     normalizer = await Dynamsoft.DDN.DocumentNormalizer.createInstance();
     let settings = await normalizer.getRuntimeSettings();
     settings.ImageParameterArray[0].BinarizationModes[0].ThresholdCompensation = 9;
-    // settings.ImageParameterArray[0].ScaleDownThreshold = 2300;
     settings.NormalizerParameterArray[0].ColourMode = "ICM_COLOUR"; // ICM_BINARY, ICM_GRAYSCALE, ICM_COLOUR
 
     await normalizer.setRuntimeSettings(settings);
@@ -152,11 +157,11 @@ async function init() {
 
 function changeColor(radio) {
     let colorMode = "ICM_GRAYSCALE";
-    if (radio.value === 'grayscale') {
+    if (radio === 'grayscale') {
         colorMode = "ICM_GRAYSCALE";
-    } else if (radio.value === 'color') {
+    } else if (radio === 'color') {
         colorMode = "ICM_COLOUR";
-    } else if (radio.value === 'binary') {
+    } else if (radio === 'binary') {
         colorMode = "ICM_BINARY";
     }
 
@@ -165,24 +170,12 @@ function changeColor(radio) {
             let settings = await normalizer.getRuntimeSettings();
             settings.NormalizerParameterArray[0].ColourMode = colorMode;
             await normalizer.setRuntimeSettings(settings);
-            normalize(target['file'], target['quads'][0].location);
+            normalize(target["file"], target["points"]);
         })();
     }
 }
 
 window.jsFunctions = {
-    setImageUsingStreaming: async function setImageUsingStreaming(dotnetRef, overlayId, imageId, imageStream) {
-        const arrayBuffer = await imageStream.arrayBuffer();
-        const blob = new Blob([arrayBuffer]);
-        const url = URL.createObjectURL(blob);
-        document.getElementById(imageId).src = url;
-        document.getElementById(imageId).style.display = 'block';
-        initOverlay(document.getElementById(overlayId));
-        if (normalizer) {
-            decodeImage(dotnetRef, url, blob);
-        }
-
-    },
     initSDK: async function (licenseKey) {
         let result = true;
 
@@ -201,21 +194,21 @@ window.jsFunctions = {
 
         return result;
     },
-    initReader: async function (dotnetRef) {
+    initReader: async function (dotnetRef, canvasId) {
         dotnetHelper = dotnetRef;
+        output = document.getElementById(canvasId);
+        ctx = output.getContext('2d');
         if (normalizer != null) {
             normalizer.stopScanning();
         }
-        else {
-            await init();
-        }
+        await init();
 
         return true;
     },
-    initScanner: async function (dotnetRef, videoId, selectId, overlayId) {
-        if (normalizer == null) {
-            await init();
-        }
+    initScanner: async function (dotnetRef, videoId, selectId, overlayId, canvasId) {
+        await init();
+        output = document.getElementById(canvasId);
+        ctx = output.getContext('2d');
         let canvas = document.getElementById(overlayId);
         target = {};
         initOverlay(canvas);
@@ -267,8 +260,8 @@ window.jsFunctions = {
                         let image = document.getElementById(imageId);
                         image.src = fr.result;
                         image.style.display = 'block';
-                        target["file"] = fr.result;
-                        decodeImage(dotnetRef, fr.result, file);
+                        
+                        decodeImage(fr.result);
                     }
                     fr.readAsDataURL(file);
 
@@ -282,9 +275,11 @@ window.jsFunctions = {
             alert("The SDK is still initializing.");
         }
     },
-    rectify: async function (dotnetRef, canvasId) {
-        let canvas = document.getElementById(canvasId);
-        normalize(target["file"], target["points"], canvas);
+    rectify: async function () {
+        normalize(target["file"], target["points"]);
+    },
+    updateSetting: async function (color) {
+        changeColor(color);
     },
 };
 

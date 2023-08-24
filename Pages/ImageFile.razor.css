@@ -1,7 +1,13 @@
 #imageview {
     position: relative;
-    width: 40vw;
+    margin-top: 20px;
+    max-width: 600px;
     margin-right: 20px;
+}
+
+#canvas {
+    width: 70%;
+    margin-top: 20px;
 }
 
 #image {
@@ -36,6 +42,7 @@
     border-radius: 5px;
     cursor: pointer;
     transition: all 0.3s ease;
+    margin: 20px;
 }
 
 .btn:hover {
