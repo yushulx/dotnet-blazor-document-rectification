@@ -5,7 +5,11 @@
     <label for="videoSource">Video source: </label>
     <select id="videoSource"></select>
 </div>
+
+<div>
 <button class="btn" @onclick="Rectify">Rectify</button>
+<button class="btn" @onclick="Save">Save</button>
+</div>
 
 <div class="container">
     <div id="videoview">
@@ -20,10 +24,10 @@
 @code {
     private DotNetObjectReference<CameraStream>? objRef;
 
-    protected override void OnInitialized()
+    public async Task Save()
     {
-        //objRef = DotNetObjectReference.Create(this);
-
+        await JSRuntime.InvokeVoidAsync(
+        "jsFunctions.save");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

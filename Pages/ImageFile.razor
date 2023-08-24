@@ -2,16 +2,16 @@
 @inject IJSRuntime JSRuntime
 
 <div>
+<button class="btn" @onclick="DocDetect">Load file</button>
+<button class="btn" @onclick="Rectify">Rectify</button>
+<button class="btn" @onclick="Save">Save</button>
+</div>
+
+<div>
     <input type="radio" name="format" value="grayscale" @onchange="HandleInputChange">Grayscale
     <input type="radio" name="format" value="color" checked @onchange="HandleInputChange">Color
     <input type="radio" name="format" value="binary" @onchange="HandleInputChange">Binary
 </div>
-
-<div>
-<button class="btn" @onclick="DocDetect">Load file</button>
-<button class="btn" @onclick="Rectify">Rectify</button>
-</div>
-
 
 <div class="container">
     <div>
@@ -46,6 +46,12 @@
             objRef = DotNetObjectReference.Create(this);
             await JSRuntime.InvokeAsync<Boolean>("jsFunctions.initReader", objRef, "canvas");
         }
+    }
+
+    public async Task Save()
+    {
+        await JSRuntime.InvokeVoidAsync(
+        "jsFunctions.save");
     }
 
     public async Task DocDetect()
