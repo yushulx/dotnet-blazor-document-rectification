@@ -1,6 +1,12 @@
 # .NET Blazor Document Rectification
 This project is a .NET Blazor WebAssembly application designed to rectify documents from both image files and camera streams, utilizing the [Dynamsoft Document Normalizer SDK](https://www.npmjs.com/package/dynamsoft-label-recognizer).
 
+
+
+https://github.com/yushulx/dotnet-blazor-document-rectification/assets/2202306/aa45bd61-552e-48e7-9c3b-4864906fe832
+
+
+
 ## Try Online Demo
 https://yushulx.me/dotnet-blazor-document-rectification/
 
