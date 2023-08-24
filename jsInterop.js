@@ -12,6 +12,8 @@ let output = null;
 let ctx = null;
 function initOverlay(ol) {
     overlay = ol;
+    overlay.addEventListener("mousedown", updatePoint);
+    overlay.addEventListener("touchstart", updatePoint);
     context = overlay.getContext('2d');
 }
 
@@ -23,18 +25,21 @@ function save() {
     })();
 }
 
-function normalize(file, quad) {
-    if (file == null || quad == null) {
+function normalize(file, location) {
+    if (file == null || location == null) {
         return;
     }
     (async () => {
         if (normalizer) {
-            normalizedImageResult = await normalizer.normalize(file, quad);
+            normalizedImageResult = await normalizer.normalize(file, {
+                quad: location
+            });
             if (normalizedImageResult) {
                 let image = normalizedImageResult.image;
                 output.width = image.width;
                 output.height = image.height;
                 let data = new ImageData(new Uint8ClampedArray(image.data), image.width, image.height);
+                ctx.clearRect(0, 0, output.width, output.height);
                 ctx.putImageData(data, 0, 0);
             }
         }
@@ -86,15 +91,19 @@ function drawOverlay(localization, text) {
 }
 
 function drawQuad(points) {
-    if (context) {
+    context.clearRect(0, 0, overlay.width, overlay.height);
+    for (let i = 0; i < points.length; i++) {
         context.beginPath();
-        context.moveTo(points[0].x, points[0].y);
-        context.lineTo(points[1].x, points[1].y);
-        context.lineTo(points[2].x, points[2].y);
-        context.lineTo(points[3].x, points[3].y);
-        context.lineTo(points[0].x, points[0].y);
+        context.arc(points[i].x, points[i].y, 5, 0, 2 * Math.PI);
         context.stroke();
     }
+    context.beginPath();
+    context.moveTo(points[0].x, points[0].y);
+    context.lineTo(points[1].x, points[1].y);
+    context.lineTo(points[2].x, points[2].y);
+    context.lineTo(points[3].x, points[3].y);
+    context.lineTo(points[0].x, points[0].y);
+    context.stroke();
 }
 
 function decodeImage(sourceImage) {
@@ -108,11 +117,11 @@ function decodeImage(sourceImage) {
                     return;
                 }
                 target["file"] = sourceImage;
-                points = quads[0].location.points;
-                target["points"] = points;
-                drawQuad(points);
+                let location = quads[0].location;
+                target["points"] = quads[0].location;
+                drawQuad(location.points);
 
-                normalize(target["file"], points)
+                normalize(target["file"], location)
             })();
 
         }
@@ -175,6 +184,41 @@ function changeColor(radio) {
     }
 }
 
+function updatePoint(e) {
+    let points = target["points"].points;
+    let rect = overlay.getBoundingClientRect();
+    
+    let scaleX = overlay.clientWidth / overlay.width;
+    let scaleY = overlay.clientHeight / overlay.height;
+    let mouseX = (e.clientX - rect.left) / scaleX;
+    let mouseY = (e.clientY - rect.top) / scaleY;
+
+    let delta = 10;
+    for (let i = 0; i < points.length; i++) {
+        if (Math.abs(points[i].x - mouseX) < delta && Math.abs(points[i].y - mouseY) < delta) {
+            overlay.addEventListener("mousemove", dragPoint);
+            overlay.addEventListener("mouseup", releasePoint);
+            overlay.addEventListener("touchmove", dragPoint);
+            overlay.addEventListener("touchend", releasePoint);
+            function dragPoint(e) {
+                let rect = overlay.getBoundingClientRect();
+                let mouseX = e.clientX || e.touches[0].clientX;
+                let mouseY = e.clientY || e.touches[0].clientY;
+                points[i].x = Math.round((mouseX - rect.left) / scaleX);
+                points[i].y = Math.round((mouseY - rect.top) / scaleY);
+                drawQuad(points);
+            }
+            function releasePoint() {
+                overlay.removeEventListener("mousemove", dragPoint);
+                overlay.removeEventListener("mouseup", releasePoint);
+                overlay.removeEventListener("touchmove", dragPoint);
+                overlay.removeEventListener("touchend", releasePoint);
+            }
+            break;
+        }
+    }
+}
+
 window.jsFunctions = {
     initSDK: async function (licenseKey) {
         let result = true;
@@ -231,10 +275,10 @@ window.jsFunctions = {
                 if (quads.length == 0) {
                     return;
                 }
-                points = quads[0].location.points;
                 target["file"] = sourceImage;
-                target["points"] = points;
-                drawQuad(points);
+                let location = quads[0].location;
+                target["points"] = quads[0].location;
+                drawQuad(location.points);
             };
             enhancer.on("played", playCallBackInfo => {
                 updateResolution();
