@@ -1,20 +1,21 @@
 let normalizer = null;
 let normalizedImageResult = null;
 let enhancer = null;
-let overlay = null;
-let context = null;
 let dotnetHelper = null;
 let videoSelect = null;
 let cameraInfo = {};
 let videoContainer = null;
-let target = {};
-let output = null;
-let ctx = null;
+let data = {};
+let canvasRectify = null;
+let canvasOverlay = null;
+let contextRectify = null;
+let contextOverlay = null;
+
 function initOverlay(ol) {
-    overlay = ol;
-    overlay.addEventListener("mousedown", updatePoint);
-    overlay.addEventListener("touchstart", updatePoint);
-    context = overlay.getContext('2d');
+    canvasOverlay = ol;
+    canvasOverlay.addEventListener("mousedown", updatePoint);
+    canvasOverlay.addEventListener("touchstart", updatePoint);
+    contextOverlay = canvasOverlay.getContext('2d');
 }
 
 function save() {
@@ -36,11 +37,11 @@ function normalize(file, location) {
             });
             if (normalizedImageResult) {
                 let image = normalizedImageResult.image;
-                output.width = image.width;
-                output.height = image.height;
+                canvasRectify.width = image.width;
+                canvasRectify.height = image.height;
                 let data = new ImageData(new Uint8ClampedArray(image.data), image.width, image.height);
-                ctx.clearRect(0, 0, output.width, output.height);
-                ctx.putImageData(data, 0, 0);
+                contextRectify.clearRect(0, 0, canvasRectify.width, canvasRectify.height);
+                contextRectify.putImageData(data, 0, 0);
             }
         }
 
@@ -48,62 +49,35 @@ function normalize(file, location) {
 }
 
 function updateOverlay(width, height) {
-    if (overlay) {
-        overlay.width = width;
-        overlay.height = height;
+    if (canvasOverlay) {
+        canvasOverlay.width = width;
+        canvasOverlay.height = height;
         clearOverlay();
     }
 }
 
 function clearOverlay() {
-    if (context) {
-        context.clearRect(0, 0, overlay.width, overlay.height);
-        context.strokeStyle = '#ff0000';
-        context.lineWidth = 5;
-    }
-}
-
-function drawOverlay(localization, text) {
-    if (context) {
-        context.beginPath();
-        context.moveTo(localization.x1, localization.y1);
-        context.lineTo(localization.x2, localization.y2);
-        context.lineTo(localization.x3, localization.y3);
-        context.lineTo(localization.x4, localization.y4);
-        context.lineTo(localization.x1, localization.y1);
-        context.stroke();
-
-        context.font = '18px Verdana';
-        context.fillStyle = '#ff0000';
-        let x = [localization.x1, localization.x2, localization.x3, localization.x4];
-        let y = [localization.y1, localization.y2, localization.y3, localization.y4];
-        x.sort(function (a, b) {
-            return a - b;
-        });
-        y.sort(function (a, b) {
-            return b - a;
-        });
-        let left = x[0];
-        let top = y[0];
-
-        context.fillText(text, left, top + 50);
+    if (contextOverlay) {
+        contextOverlay.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
+        contextOverlay.strokeStyle = '#ff0000';
+        contextOverlay.lineWidth = 5;
     }
 }
 
 function drawQuad(points) {
-    context.clearRect(0, 0, overlay.width, overlay.height);
+    contextOverlay.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
     for (let i = 0; i < points.length; i++) {
-        context.beginPath();
-        context.arc(points[i].x, points[i].y, 5, 0, 2 * Math.PI);
-        context.stroke();
+        contextOverlay.beginPath();
+        contextOverlay.arc(points[i].x, points[i].y, 5, 0, 2 * Math.PI);
+        contextOverlay.stroke();
     }
-    context.beginPath();
-    context.moveTo(points[0].x, points[0].y);
-    context.lineTo(points[1].x, points[1].y);
-    context.lineTo(points[2].x, points[2].y);
-    context.lineTo(points[3].x, points[3].y);
-    context.lineTo(points[0].x, points[0].y);
-    context.stroke();
+    contextOverlay.beginPath();
+    contextOverlay.moveTo(points[0].x, points[0].y);
+    contextOverlay.lineTo(points[1].x, points[1].y);
+    contextOverlay.lineTo(points[2].x, points[2].y);
+    contextOverlay.lineTo(points[3].x, points[3].y);
+    contextOverlay.lineTo(points[0].x, points[0].y);
+    contextOverlay.stroke();
 }
 
 function decodeImage(sourceImage) {
@@ -116,12 +90,12 @@ function decodeImage(sourceImage) {
                 if (quads.length == 0) {
                     return;
                 }
-                target["file"] = sourceImage;
+                data["file"] = sourceImage;
                 let location = quads[0].location;
-                target["points"] = quads[0].location;
+                data["points"] = quads[0].location;
                 drawQuad(location.points);
 
-                normalize(target["file"], location)
+                normalize(data["file"], location)
             })();
 
         }
@@ -174,34 +148,34 @@ function changeColor(radio) {
         colorMode = "ICM_BINARY";
     }
 
-    if (normalizer && target['file']) {
+    if (normalizer && data['file']) {
         (async () => {
             let settings = await normalizer.getRuntimeSettings();
             settings.NormalizerParameterArray[0].ColourMode = colorMode;
             await normalizer.setRuntimeSettings(settings);
-            normalize(target["file"], target["points"]);
+            normalize(data["file"], data["points"]);
         })();
     }
 }
 
 function updatePoint(e) {
-    let points = target["points"].points;
-    let rect = overlay.getBoundingClientRect();
+    let points = data["points"].points;
+    let rect = canvasOverlay.getBoundingClientRect();
     
-    let scaleX = overlay.clientWidth / overlay.width;
-    let scaleY = overlay.clientHeight / overlay.height;
+    let scaleX = canvasOverlay.clientWidth / canvasOverlay.width;
+    let scaleY = canvasOverlay.clientHeight / canvasOverlay.height;
     let mouseX = (e.clientX - rect.left) / scaleX;
     let mouseY = (e.clientY - rect.top) / scaleY;
 
     let delta = 10;
     for (let i = 0; i < points.length; i++) {
         if (Math.abs(points[i].x - mouseX) < delta && Math.abs(points[i].y - mouseY) < delta) {
-            overlay.addEventListener("mousemove", dragPoint);
-            overlay.addEventListener("mouseup", releasePoint);
-            overlay.addEventListener("touchmove", dragPoint);
-            overlay.addEventListener("touchend", releasePoint);
+            canvasOverlay.addEventListener("mousemove", dragPoint);
+            canvasOverlay.addEventListener("mouseup", releasePoint);
+            canvasOverlay.addEventListener("touchmove", dragPoint);
+            canvasOverlay.addEventListener("touchend", releasePoint);
             function dragPoint(e) {
-                let rect = overlay.getBoundingClientRect();
+                let rect = canvasOverlay.getBoundingClientRect();
                 let mouseX = e.clientX || e.touches[0].clientX;
                 let mouseY = e.clientY || e.touches[0].clientY;
                 points[i].x = Math.round((mouseX - rect.left) / scaleX);
@@ -209,10 +183,10 @@ function updatePoint(e) {
                 drawQuad(points);
             }
             function releasePoint() {
-                overlay.removeEventListener("mousemove", dragPoint);
-                overlay.removeEventListener("mouseup", releasePoint);
-                overlay.removeEventListener("touchmove", dragPoint);
-                overlay.removeEventListener("touchend", releasePoint);
+                canvasOverlay.removeEventListener("mousemove", dragPoint);
+                canvasOverlay.removeEventListener("mouseup", releasePoint);
+                canvasOverlay.removeEventListener("touchmove", dragPoint);
+                canvasOverlay.removeEventListener("touchend", releasePoint);
             }
             break;
         }
@@ -240,8 +214,8 @@ window.jsFunctions = {
     },
     initReader: async function (dotnetRef, canvasId) {
         dotnetHelper = dotnetRef;
-        output = document.getElementById(canvasId);
-        ctx = output.getContext('2d');
+        canvasRectify = document.getElementById(canvasId);
+        contextRectify = canvasRectify.getContext('2d');
         if (normalizer != null) {
             normalizer.stopScanning();
         }
@@ -249,12 +223,12 @@ window.jsFunctions = {
 
         return true;
     },
-    initScanner: async function (dotnetRef, videoId, selectId, overlayId, canvasId) {
+    initScanner: async function (dotnetRef, videoId, selectId, canvasOverlayId, canvasId) {
         await init();
-        output = document.getElementById(canvasId);
-        ctx = output.getContext('2d');
-        let canvas = document.getElementById(overlayId);
-        target = {};
+        canvasRectify = document.getElementById(canvasId);
+        contextRectify = canvasRectify.getContext('2d');
+        let canvas = document.getElementById(canvasOverlayId);
+        data = {};
         initOverlay(canvas);
         videoContainer = document.getElementById(videoId);
         videoSelect = document.getElementById(selectId);
@@ -275,9 +249,9 @@ window.jsFunctions = {
                 if (quads.length == 0) {
                     return;
                 }
-                target["file"] = sourceImage;
+                data["file"] = sourceImage;
                 let location = quads[0].location;
-                target["points"] = quads[0].location;
+                data["points"] = quads[0].location;
                 drawQuad(location.points);
             };
             enhancer.on("played", playCallBackInfo => {
@@ -290,9 +264,9 @@ window.jsFunctions = {
         }
         return true;
     },
-    selectFile: async function (dotnetRef, overlayId, imageId) {
-        target = {};
-        initOverlay(document.getElementById(overlayId));
+    selectFile: async function (dotnetRef, canvasOverlayId, imageId) {
+        data = {};
+        initOverlay(document.getElementById(canvasOverlayId));
         if (normalizer) {
             let input = document.createElement("input");
             input.type = "file";
@@ -320,10 +294,13 @@ window.jsFunctions = {
         }
     },
     rectify: async function () {
-        normalize(target["file"], target["points"]);
+        normalize(data["file"], data["points"]);
     },
     updateSetting: async function (color) {
         changeColor(color);
+    },
+    save: async function () {
+        save();
     },
 };
 
