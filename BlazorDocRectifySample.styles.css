@@ -1,9 +1,11 @@
 /* /Pages/CameraStream.razor.rz.scp.css */
 #videoview[b-d6seyxhp68] {
     position: relative;
+    max-width: 720px;
     width: 100%;
     height: 60vh;
     margin-right: 20px;
+    margin-top: 20px;
     border: 2px solid #FE8E14;
 }
 
@@ -40,6 +42,7 @@
     border-radius: 5px;
     cursor: pointer;
     transition: all 0.3s ease;
+    margin: 20px;
 }
 
 .btn:hover[b-d6seyxhp68] {
@@ -48,8 +51,14 @@
 /* /Pages/ImageFile.razor.rz.scp.css */
 #imageview[b-hizr9lf8lo] {
     position: relative;
-    width: 40vw;
+    margin-top: 20px;
+    max-width: 600px;
     margin-right: 20px;
+}
+
+#canvas[b-hizr9lf8lo] {
+    width: 70%;
+    margin-top: 20px;
 }
 
 #image[b-hizr9lf8lo] {
@@ -84,6 +93,7 @@
     border-radius: 5px;
     cursor: pointer;
     transition: all 0.3s ease;
+    margin: 20px;
 }
 
 .btn:hover[b-hizr9lf8lo] {
@@ -109,6 +119,7 @@
     border-radius: 5px;
     cursor: pointer;
     transition: all 0.3s ease;
+    margin: 20px;
 }
 
 .btn:hover[b-69j69ejerh] {
