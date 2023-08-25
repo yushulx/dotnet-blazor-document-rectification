@@ -35,7 +35,7 @@
         if (firstRender)
         {
             objRef = DotNetObjectReference.Create(this);
-            await JSRuntime.InvokeAsync<Boolean>("jsFunctions.initScanner", objRef, "videoContainer", "videoSource", "overlay", "canvas");
+            await JSRuntime.InvokeAsync<Boolean>("jsFunctions.initCameraStream", objRef, "videoContainer", "videoSource", "overlay", "canvas");
         }
     }
 

@@ -26,7 +26,6 @@
 </div>
 
 @code {
-    private MarkupString result = new MarkupString("");
     private DotNetObjectReference<ImageFile>? objRef;
     private string? inputValue;
 
@@ -44,7 +43,7 @@
         if (firstRender)
         {
             objRef = DotNetObjectReference.Create(this);
-            await JSRuntime.InvokeAsync<Boolean>("jsFunctions.initReader", objRef, "canvas");
+            await JSRuntime.InvokeAsync<Boolean>("jsFunctions.initImageFile", objRef, "canvas");
         }
     }
 
