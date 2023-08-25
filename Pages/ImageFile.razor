@@ -43,7 +43,7 @@
         if (firstRender)
         {
             objRef = DotNetObjectReference.Create(this);
-            await JSRuntime.InvokeAsync<Boolean>("jsFunctions.initImageFile", objRef, "canvas");
+            await JSRuntime.InvokeAsync<Boolean>("jsFunctions.initImageFile", objRef, "overlay", "canvas");
         }
     }
 
@@ -56,7 +56,7 @@
     public async Task DocDetect()
     {
         await JSRuntime.InvokeVoidAsync(
-        "jsFunctions.selectFile", objRef, "overlay", "image");
+        "jsFunctions.selectFile", objRef, "image");
     }
 
     public async Task Rectify()

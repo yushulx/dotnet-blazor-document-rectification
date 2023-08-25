@@ -212,9 +212,10 @@ window.jsFunctions = {
 
         return result;
     },
-    initImageFile: async function (dotnetRef, canvasId) {
+    initImageFile: async function (dotnetRef, canvasOverlayId, canvasRectifyId) {
         dotnetHelper = dotnetRef;
-        canvasRectify = document.getElementById(canvasId);
+        initOverlay(document.getElementById(canvasOverlayId));
+        canvasRectify = document.getElementById(canvasRectifyId);
         contextRectify = canvasRectify.getContext('2d');
         if (normalizer != null) {
             normalizer.stopScanning();
@@ -223,13 +224,12 @@ window.jsFunctions = {
 
         return true;
     },
-    initCameraStream: async function (dotnetRef, videoId, selectId, canvasOverlayId, canvasId) {
+    initCameraStream: async function (dotnetRef, videoId, selectId, canvasOverlayId, canvasRectifyId) {
         await init();
-        canvasRectify = document.getElementById(canvasId);
+        initOverlay(document.getElementById(canvasOverlayId));
+        canvasRectify = document.getElementById(canvasRectifyId);
         contextRectify = canvasRectify.getContext('2d');
-        let canvas = document.getElementById(canvasOverlayId);
         data = {};
-        initOverlay(canvas);
         videoContainer = document.getElementById(videoId);
         videoSelect = document.getElementById(selectId);
         videoSelect.onchange = openCamera;
@@ -264,9 +264,9 @@ window.jsFunctions = {
         }
         return true;
     },
-    selectFile: async function (dotnetRef, canvasOverlayId, imageId) {
+    selectFile: async function (dotnetRef, imageId) {
         data = {};
-        initOverlay(document.getElementById(canvasOverlayId));
+        
         if (normalizer) {
             let input = document.createElement("input");
             input.type = "file";
