@@ -212,7 +212,7 @@ window.jsFunctions = {
 
         return result;
     },
-    initReader: async function (dotnetRef, canvasId) {
+    initImageFile: async function (dotnetRef, canvasId) {
         dotnetHelper = dotnetRef;
         canvasRectify = document.getElementById(canvasId);
         contextRectify = canvasRectify.getContext('2d');
@@ -223,7 +223,7 @@ window.jsFunctions = {
 
         return true;
     },
-    initScanner: async function (dotnetRef, videoId, selectId, canvasOverlayId, canvasId) {
+    initCameraStream: async function (dotnetRef, videoId, selectId, canvasOverlayId, canvasId) {
         await init();
         canvasRectify = document.getElementById(canvasId);
         contextRectify = canvasRectify.getContext('2d');
