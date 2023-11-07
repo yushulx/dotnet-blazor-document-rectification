@@ -121,7 +121,7 @@ async function openCamera() {
 async function init() {
     normalizer = await Dynamsoft.DDN.DocumentNormalizer.createInstance();
     let settings = await normalizer.getRuntimeSettings();
-    settings.ImageParameterArray[0].BinarizationModes[0].ThresholdCompensation = 9;
+    settings.ImageParameterArray[0].BinarizationModes[0].ThresholdCompensation = 10;
     settings.NormalizerParameterArray[0].ColourMode = "ICM_COLOUR"; // ICM_BINARY, ICM_GRAYSCALE, ICM_COLOUR
 
     await normalizer.setRuntimeSettings(settings);
